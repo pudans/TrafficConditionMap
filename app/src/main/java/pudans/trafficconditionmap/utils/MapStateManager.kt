@@ -1,9 +1,9 @@
 package pudans.trafficconditionmap.utils
 
 import android.content.Context
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.maps.GoogleMap
+import com.google.android.libraries.maps.model.CameraPosition
+import com.google.android.libraries.maps.model.LatLng
 
 class MapStateManager(context: Context) {
 

@@ -4,6 +4,7 @@ import io.reactivex.Observable
 import okhttp3.*
 import okhttp3.logging.HttpLoggingInterceptor
 import pudans.trafficconditionmap.api.model.ServerResult
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
@@ -13,7 +14,7 @@ import retrofit2.http.Query
 interface ApiService {
 
     @GET("transport/traffic-images")
-    fun getTrafficImages(@Query("date_time") date_time: String): Observable<ServerResult>
+    suspend fun getTrafficImages(@Query("date_time") date_time: String): Response<ServerResult>
 
     companion object {
 

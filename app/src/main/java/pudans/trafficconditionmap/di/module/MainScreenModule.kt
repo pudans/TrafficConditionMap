@@ -3,22 +3,21 @@ package pudans.trafficconditionmap.di.module
 import dagger.Module
 import dagger.Provides
 import pudans.trafficconditionmap.ui.view.MainActivity
-import pudans.trafficconditionmap.di.scope.ActivityScope
-import pudans.trafficconditionmap.feature.Feature
-import pudans.trafficconditionmap.ui.MainActivityViewController
+//import pudans.trafficconditionmap.di.scope.ActivityScope
+//import pudans.trafficconditionmap.feature.Feature
 
-@Module
-class MainScreenModule(
-    private val mainActivity: MainActivity
-) {
+//@Module
+//class MainScreenModule(
+//    private val mainActivity: MainActivity
+//) {
+//
+//    @Provides
+//    fun mainActivity() = mainActivity
 
-    @Provides
-    fun mainActivity() = mainActivity
-
-    @Provides
-    @ActivityScope
-    fun bindings(
-        view: MainActivity,
-        feature: Feature
-    ): MainActivityViewController = MainActivityViewController(view = view, feature = feature)
-}
+//    @Provides
+//    @ActivityScope
+//    fun bindings(
+//        view: MainActivity,
+//        feature: Feature
+//    ): MainActivityViewController = MainActivityViewController(view = view, feature = feature)
+//}

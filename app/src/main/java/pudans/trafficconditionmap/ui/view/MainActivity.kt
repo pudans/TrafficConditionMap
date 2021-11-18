@@ -5,203 +5,255 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Bundle
 import android.os.Handler
-import android.view.View
+import android.os.Looper
+import android.util.Log
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.databinding.DataBindingUtil
-import com.google.android.gms.maps.*
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import io.reactivex.functions.Consumer
-import kotlinx.android.synthetic.main.main_activity.*
-import pudans.trafficconditionmap.databinding.MainActivityBinding
-import pudans.trafficconditionmap.di.component.MainScreenInjector
-import pudans.trafficconditionmap.ui.MainActivityViewController
-import pudans.trafficconditionmap.ui.event.Event
-import pudans.trafficconditionmap.ui.viewmodel.ViewModel
-import pudans.trafficconditionmap.utils.DateUtils
+import com.google.android.libraries.maps.CameraUpdateFactory
+import com.google.android.libraries.maps.GoogleMap
+import com.google.android.libraries.maps.GoogleMapOptions
+import com.google.android.libraries.maps.MapView
+import com.google.android.libraries.maps.model.CameraPosition
+import com.google.android.libraries.maps.model.LatLng
+import com.google.maps.android.ktx.awaitMap
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import pudans.trafficconditionmap.ui.viewmodel.MainViewModel
 import pudans.trafficconditionmap.utils.MapStateManager
-import java.util.*
-import javax.inject.Inject
-import pudans.trafficconditionmap.R
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.android.libraries.maps.model.MarkerOptions
+import pudans.trafficconditionmap.ui.state.ProfileVideoListState
+
+@AndroidEntryPoint
+class MainActivity : AppCompatActivity() {
+
+	val viewModel = viewModels<MainViewModel>()
+
+	private var mGoogleMap: GoogleMap? = null
+	private lateinit var mInfoWindowAdapter: CameraInfoWindowAdapter
+
+	private val mHandler = Handler(Looper.getMainLooper())
+	private val mUpdateRunner = Runnable { updateDate() }
+
+	private val googleMapOptions = GoogleMapOptions()
+		.ambientEnabled(true)
+		.camera(DEFAULT_CAMERA_POSITION)
+		.mapType(GoogleMap.MAP_TYPE_NORMAL)
+		.rotateGesturesEnabled(true)
+		.scrollGesturesEnabled(true)
+		.tiltGesturesEnabled(false)
+		.zoomGesturesEnabled(true)
+		.mapToolbarEnabled(false)
+		.compassEnabled(false)
+		.zOrderOnTop(false)
 
 
-class MainActivity : ObservableSourceActivity<Event>(), Consumer<ViewModel>, OnMapReadyCallback {
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
 
-    @Inject
-    lateinit var mViewController: MainActivityViewController
-    private lateinit var mBinding: MainActivityBinding
+		mInfoWindowAdapter = CameraInfoWindowAdapter(this.layoutInflater)
+//
+//		update.setOnClickListener { updateDate() }
 
-    private var mGoogleMap: GoogleMap? = null
-    private lateinit var mInfoWindowAdapter: CameraInfoWindowAdapter
+		setContent {
 
-    private val mHandler = Handler()
-    private val mUpdateRunner = Runnable { updateDate() }
+			val state = viewModel.value.observeFeedScreenState().value
+			Log.d("skdfksdkf", "$state")
 
-    private val googleMapOptions = GoogleMapOptions()
-        .ambientEnabled(true)
-        .camera(DEFAULT_CAMERA_POSITION)
-        .mapType(GoogleMap.MAP_TYPE_NORMAL)
-        .rotateGesturesEnabled(true)
-        .scrollGesturesEnabled(true)
-        .tiltGesturesEnabled(false)
-        .zoomGesturesEnabled(true)
-        .mapToolbarEnabled(false)
-        .compassEnabled(false)
-        .zOrderOnTop(false)
+			val mapView = rememberMapViewWithLifecycle(googleMapOptions)
+			MapViewContainer(mapView)
+
+			if (state is ProfileVideoListState.Data) {
+				state.item.cameras?.let {
+					mGoogleMap?.clear()
+					it.forEach { cameraState ->
+						val position = LatLng(cameraState.latitude!!, cameraState.longitude!!)
+						val marker = MarkerOptions()
+							.position(position)
+							.title(cameraState.timestamp)
+							.snippet(cameraState.imageUrl)
+						mGoogleMap?.addMarker(marker)
+					}
+				}
+			}
+		}
+	}
+
+	override fun onStart() {
+		super.onStart()
+
+		mHandler.post(mUpdateRunner)
+	}
+
+	override fun onStop() {
+		super.onStop()
+
+		mHandler.removeCallbacks(mUpdateRunner)
+
+		mGoogleMap?.let { MapStateManager(this).saveMapState(it) }
+	}
+
+	private fun updateDate() {
+		mHandler.removeCallbacks(mUpdateRunner)
+//		onNext(Event.UpdateButtonClicked(DateUtils.toISO8601(Date())))
+		mHandler.postDelayed(mUpdateRunner, UPDATE_INTERVAL)
+	}
+
+//	override fun accept(viewModel: ViewModel?) {
+//
+//		viewModel?.state?.let { screenState ->
+//
+//			when {
+//				screenState.isError -> {
+//					mBinding.loader.visibility = View.GONE
+//					mBinding.update.isEnabled = true
+//					mBinding.update.setImageResource(R.drawable.ic_update)
+//					mBinding.lastUpdateLabel.text = "Error"
+//					mBinding.lastUpdateLabel.visibility = View.VISIBLE
+//				}
+//				screenState.isLoading -> {
+//					mBinding.loader.visibility = View.VISIBLE
+//					mBinding.update.isEnabled = false
+//					mBinding.update.setImageDrawable(null)
+//					mBinding.lastUpdateLabel.text = null
+//					mBinding.lastUpdateLabel.visibility = View.GONE
+//				}
+//				else -> {
+//					mBinding.loader.visibility = View.GONE
+//					mBinding.update.isEnabled = true
+//					mBinding.update.setImageResource(R.drawable.ic_update)
+//					mBinding.lastUpdateLabel.text = screenState.lastUpdateTime
+//					mBinding.lastUpdateLabel.visibility = View.VISIBLE
+//
+
+//				}
+//			}
+//		}
+//	}
+
+	private fun requestLocationPermissionIfNeed(): Boolean {
+		if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED
+			&& ContextCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED
+		) {
+			onLocationPermissionGranted()
+			return true
+		} else {
+			requestPermissions()
+			return false
+		}
+	}
+
+	private fun requestPermissions() {
+		ActivityCompat.requestPermissions(
+			this, arrayOf(ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION),
+			REQUEST_CODE
+		)
+	}
+
+	override fun onRequestPermissionsResult(
+		requestCode: Int,
+		permissions: Array<String>,
+		grantResults: IntArray
+	) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+		if (requestCode == REQUEST_CODE
+			&& grantResults.isNotEmpty()
+			&& grantResults[0] == PERMISSION_GRANTED
+			&& grantResults[1] == PERMISSION_GRANTED
+		) {
+			onLocationPermissionGranted()
+		}
+	}
+
+	private fun onLocationPermissionGranted() {
+		mGoogleMap?.isMyLocationEnabled = true
+	}
+
+	companion object {
+		private val DEFAULT_CAMERA_POSITION = CameraPosition(LatLng(1.290270, 103.851959), 10f, 0f, 0f)
+
+		private const val REQUEST_CODE = 10
+
+		private const val UPDATE_INTERVAL = 60 * 1000L
+	}
 
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+	@Composable
+	private fun MapViewContainer(
+		map: MapView
+	) {
 
-        MainScreenInjector.get(this).inject(this)
+		LaunchedEffect(map) {
+			mGoogleMap = map.awaitMap()
+		}
 
-        mBinding = DataBindingUtil.setContentView(this, R.layout.main_activity)
+		ZoomControls(
+			{ mGoogleMap?.animateCamera(CameraUpdateFactory.zoomIn()) },
+			{ mGoogleMap?.animateCamera(CameraUpdateFactory.zoomOut()) },
+		)
 
-        mViewController.setup(this)
+		val coroutineScope = rememberCoroutineScope()
+		AndroidView({ map }) { mapView ->
 
-        mInfoWindowAdapter = CameraInfoWindowAdapter(this.layoutInflater)
+			coroutineScope.launch {
+				val googleMap = mapView.awaitMap()
 
-        val mapFragment = SupportMapFragment.newInstance(googleMapOptions).apply {
-            getMapAsync(this@MainActivity)
-        }
-        supportFragmentManager.beginTransaction().add(R.id.map, mapFragment).commit()
+				googleMap.uiSettings?.isMyLocationButtonEnabled = false
+				googleMap.setInfoWindowAdapter(mInfoWindowAdapter)
+				requestLocationPermissionIfNeed()
 
-        map_plus.setOnClickListener { mGoogleMap.zoomIn() }
+				MapStateManager(mapView.context).savedCameraPosition?.let {
+					googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(it))
+				}
+			}
+		}
+	}
 
-        map_minus.setOnClickListener { mGoogleMap?.zoomOut() }
+	@Composable
+	private fun ZoomControls(
+		onZoomIn: () -> Unit,
+		onZoomOut: () -> Unit
+	) {
+		Row(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.Center
+		) {
+			ZoomButton("-", onClick = { onZoomOut() })
+			ZoomButton("+", onClick = { onZoomIn() })
+		}
+	}
 
-        update.setOnClickListener { updateDate() }
-    }
-
-    override fun onStart() {
-        super.onStart()
-
-        mHandler.post(mUpdateRunner)
-    }
-
-    override fun onStop() {
-        super.onStop()
-
-        mHandler.removeCallbacks(mUpdateRunner)
-
-        mGoogleMap?.let { MapStateManager(this).saveMapState(it) }
-    }
-
-    private fun updateDate() {
-        mHandler.removeCallbacks(mUpdateRunner)
-        onNext(Event.UpdateButtonClicked(DateUtils.toISO8601(Date())))
-        mHandler.postDelayed(mUpdateRunner, UPDATE_INTERVAL)
-    }
-
-    override fun onMapReady(googleMap: GoogleMap) {
-        mGoogleMap = googleMap
-        mGoogleMap?.uiSettings?.isMyLocationButtonEnabled = false
-        mGoogleMap?.setInfoWindowAdapter(mInfoWindowAdapter)
-
-        requestLocationPermissionIfNeed()
-
-        MapStateManager(this).savedCameraPosition?.let {
-            val update = CameraUpdateFactory.newCameraPosition(it)
-            mGoogleMap?.moveCamera(update)
-        }
-    }
-
-    override fun accept(viewModel: ViewModel?) {
-
-        viewModel?.state?.let { screenState ->
-
-            when {
-                screenState.isError -> {
-                    mBinding.loader.visibility = View.GONE
-                    mBinding.update.isEnabled = true
-                    mBinding.update.setImageResource(R.drawable.ic_update)
-                    mBinding.lastUpdateLabel.text = "Error"
-                    mBinding.lastUpdateLabel.visibility = View.VISIBLE
-                }
-                screenState.isLoading -> {
-                    mBinding.loader.visibility = View.VISIBLE
-                    mBinding.update.isEnabled = false
-                    mBinding.update.setImageDrawable(null)
-                    mBinding.lastUpdateLabel.text = null
-                    mBinding.lastUpdateLabel.visibility = View.GONE
-                }
-                else -> {
-                    mBinding.loader.visibility = View.GONE
-                    mBinding.update.isEnabled = true
-                    mBinding.update.setImageResource(R.drawable.ic_update)
-                    mBinding.lastUpdateLabel.text = screenState.lastUpdateTime
-                    mBinding.lastUpdateLabel.visibility = View.VISIBLE
-
-                    screenState.cameras?.let {
-                        mGoogleMap?.clear()
-                        it.forEach { cameraState ->
-                            val position = LatLng(cameraState.latitude!!, cameraState.longitude!!)
-                            val marker = MarkerOptions()
-                                .position(position)
-                                .title(cameraState.timestamp)
-                                .snippet(cameraState.imageUrl)
-                            mGoogleMap?.addMarker(marker)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun requestLocationPermissionIfNeed(): Boolean {
-        if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED
-            && ContextCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED
-        ) {
-            onLocationPermissionGranted()
-            return true
-        } else {
-            requestPermissions()
-            return false
-        }
-    }
-
-    private fun requestPermissions() {
-        ActivityCompat.requestPermissions(this, arrayOf(ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION),
-            REQUEST_CODE
-        )
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_CODE
-            && grantResults.isNotEmpty()
-            && grantResults[0] == PERMISSION_GRANTED
-            && grantResults[1] == PERMISSION_GRANTED
-        ) {
-            onLocationPermissionGranted()
-        }
-    }
-
-    private fun onLocationPermissionGranted() {
-        mGoogleMap?.isMyLocationEnabled = true
-    }
-
-    private fun GoogleMap?.zoomIn() {
-        this?.animateCamera(CameraUpdateFactory.zoomIn())
-    }
-
-    private fun GoogleMap?.zoomOut() {
-        this?.animateCamera(CameraUpdateFactory.zoomOut())
-    }
-
-    companion object {
-
-        private val DEFAULT_CAMERA_POSITION = CameraPosition(LatLng(1.290270, 103.851959), 10f, 0f, 0f)
-
-        private const val REQUEST_CODE = 10
-
-        private const val UPDATE_INTERVAL = 60 * 1000L
-
-    }
+	@Composable
+	private fun ZoomButton(text: String, onClick: () -> Unit) {
+		Button(
+			modifier = Modifier.padding(8.dp),
+			colors = ButtonDefaults.buttonColors(
+				backgroundColor = MaterialTheme.colors.onPrimary,
+				contentColor = MaterialTheme.colors.primary
+			),
+			onClick = onClick
+		) {
+			Text(text = text, style = MaterialTheme.typography.h5)
+		}
+	}
 }
+
+
+
