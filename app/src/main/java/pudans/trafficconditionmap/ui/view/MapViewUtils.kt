@@ -35,9 +35,7 @@ import pudans.trafficconditionmap.R
 fun rememberMapViewWithLifecycle(options: GoogleMapOptions): MapView {
 	val context = LocalContext.current
 	val mapView = remember {
-		MapView(context, options).apply {
-			id = R.id.map
-		}
+		MapView(context, options)
 	}
 
 	val lifecycle = LocalLifecycleOwner.current.lifecycle
