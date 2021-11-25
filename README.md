@@ -31,6 +31,19 @@ Android.
 
 This app uses [***MVVM (Model View View-Model)***](https://developer.android.com/jetpack/docs/guide#recommended-app-arch) architecture.
 
+## Google Maps SDK
+
+To get the MapView working, you need to get an API key as
+the [documentation says](https://developers.google.com/maps/documentation/android-sdk/get-api-key),
+and include it in the `local.properties` file as follows:
+
+```
+google.maps.key={insert_your_api_key_here}
+```
+
+When restricting the Key to Android apps, use `androidx.compose.samples.crane` as package name, and
+`A0:BD:B3:B6:F0:C4:BE:90:C6:9D:5F:4C:1D:F0:90:80:7F:D7:FE:1F` as SHA-1 certificate fingerprint.
+
 ## MAD Score
 ![summary](https://github.com/pudans/TrafficConditionMap/blob/master/art/summary.png)
 ![summary](https://github.com/pudans/TrafficConditionMap/blob/master/art/kotlin.png)
