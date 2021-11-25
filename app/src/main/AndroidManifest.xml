@@ -3,8 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="pudans.trafficconditionmap">
 
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -19,7 +17,8 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_maps_key" />
+            android:value="${googleMapsKey}"
+            />
 
         <activity
             android:name=".ui.view.MainActivity"

@@ -24,19 +24,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.google.android.libraries.maps.GoogleMap
 import com.google.android.libraries.maps.GoogleMapOptions
 import com.google.android.libraries.maps.MapView
-import pudans.trafficconditionmap.R
+import com.google.android.libraries.maps.model.CameraPosition
+import com.google.android.libraries.maps.model.LatLng
 
 /**
  * Remembers a MapView and gives it the lifecycle of the current LifecycleOwner
  */
 @Composable
-fun rememberMapViewWithLifecycle(options: GoogleMapOptions): MapView {
+fun rememberMapViewWithLifecycle(): MapView {
 	val context = LocalContext.current
-	val mapView = remember {
-		MapView(context, options)
-	}
+	val mapView = remember { MapView(context, googleMapOptions) }
 
 	val lifecycle = LocalLifecycleOwner.current.lifecycle
 	DisposableEffect(lifecycle, mapView) {
@@ -50,6 +50,18 @@ fun rememberMapViewWithLifecycle(options: GoogleMapOptions): MapView {
 
 	return mapView
 }
+
+private val googleMapOptions = GoogleMapOptions()
+	.ambientEnabled(true)
+	.camera(CameraPosition(LatLng(1.290270, 103.851959), 10f, 0f, 0f))
+	.mapType(GoogleMap.MAP_TYPE_NORMAL)
+	.rotateGesturesEnabled(true)
+	.scrollGesturesEnabled(true)
+	.tiltGesturesEnabled(false)
+	.zoomGesturesEnabled(true)
+	.mapToolbarEnabled(false)
+	.compassEnabled(false)
+	.zOrderOnTop(false)
 
 private fun getMapLifecycleObserver(mapView: MapView): LifecycleEventObserver =
 	LifecycleEventObserver { _, event ->

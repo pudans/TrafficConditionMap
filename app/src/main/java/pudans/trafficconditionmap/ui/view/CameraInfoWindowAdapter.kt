@@ -1,5 +1,6 @@
 package pudans.trafficconditionmap.ui.view
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
@@ -12,18 +13,17 @@ import com.google.android.libraries.maps.model.Marker
 import pudans.trafficconditionmap.R
 
 class CameraInfoWindowAdapter(
-	private val inflater: LayoutInflater
+	private val mContext: Context
 ) : GoogleMap.InfoWindowAdapter {
 
 	override fun getInfoContents(marker: Marker): View? {
-
-		val layout = inflater.inflate(R.layout.camera_layout, null, false)
+		val layout = LayoutInflater.from(mContext).inflate(R.layout.camera_layout, null, false)
 
 		val textView = layout.findViewById<TextView>(R.id.title)
 		val imageView = layout.findViewById<ImageView>(R.id.image)
 		textView.text = marker.title
 
-		Glide.with(inflater.context)
+		Glide.with(mContext)
 			.load(marker.snippet)
 			.listener(object : RequestListener<String, GlideDrawable> {
 
