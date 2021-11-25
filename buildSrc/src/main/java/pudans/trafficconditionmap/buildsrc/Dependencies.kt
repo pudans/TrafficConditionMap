@@ -49,6 +49,5 @@ object Dependencies {
 		const val fragment = "androidx.fragment:fragment:1.4.0"
 		const val activity = "androidx.activity:activity-compose:1.4.0"
 		const val hilt = "androidx.hilt:hilt-navigation-compose:1.0.0-beta01"
-//		const val material = "com.google.android.material:material:1.4.0"
 	}
 }

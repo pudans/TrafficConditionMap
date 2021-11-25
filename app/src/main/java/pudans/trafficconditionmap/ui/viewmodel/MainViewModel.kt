@@ -14,8 +14,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import pudans.trafficconditionmap.api.model.ApiResult
 import pudans.trafficconditionmap.api.model.TrafficImages
-import pudans.trafficconditionmap.ui.state.CameraState
 import pudans.trafficconditionmap.ui.state.CameraListState
+import pudans.trafficconditionmap.ui.state.CameraState
 import pudans.trafficconditionmap.ui.state.ScreenState
 import pudans.trafficconditionmap.utils.DateUtils
 import java.util.*
@@ -24,14 +24,15 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel
 @Inject constructor(
-	private val mTrafficImagesRepository: TrafficImagesRepository,
+	private val mTrafficImagesRepository: TrafficImagesRepository
 ) : ViewModel() {
 
 	private val mFeedScreenState = mutableStateOf<CameraListState>(CameraListState.Loading)
 
-	private val mTimerJob = CoroutineScope(Dispatchers.IO).launchPeriodicAsync(60_000) {
-		loadData()
-	}
+	private val mTimerJob = CoroutineScope(Dispatchers.IO)
+		.launchPeriodicAsync(UPDATE_TIME_DELAY_MILLS) {
+			loadData()
+		}
 
 	fun observeFeedScreenState(): State<CameraListState> = mFeedScreenState
 
@@ -42,7 +43,8 @@ class MainViewModel
 					mFeedScreenState.value = when (result) {
 						is ApiResult.Error -> CameraListState.Empty
 						is ApiResult.Loading -> CameraListState.Loading
-						is ApiResult.Success -> CameraListState.Data(result.data.items?.firstOrNull()?.toState()!!)
+						is ApiResult.Success ->
+							CameraListState.Data(result.data.items?.firstOrNull()?.toState()!!)
 					}
 				}
 		}
@@ -51,10 +53,9 @@ class MainViewModel
 	private fun TrafficImages.toState(): ScreenState =
 		ScreenState(
 			lastUpdateTime = "Last update: ${DateUtils.fromISO860toHumanReadable(timestamp)}",
-			cameras = Array(cameras?.size ?: 0) {
-				val camera = cameras?.get(it)!!
+			cameras = cameras?.map { camera ->
 				CameraState(
-					timestamp = "Last update: ${DateUtils.fromISO860toHumanReadable(camera.timestamp)}",
+					timestamp = "Date: ${DateUtils.fromISO860toHumanReadable(camera.timestamp)}",
 					imageUrl = camera.image,
 					longitude = camera.location?.longitude,
 					latitude = camera.location?.latitude
@@ -79,5 +80,9 @@ class MainViewModel
 			action()
 			delay(repeatMillis)
 		}
+	}
+
+	companion object {
+		private const val UPDATE_TIME_DELAY_MILLS = 60_000L
 	}
 }

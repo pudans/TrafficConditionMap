@@ -18,7 +18,6 @@ import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,7 +54,7 @@ fun FeedScreen() {
 		val googleMap = mapView.awaitMap()
 		if (state is CameraListState.Data) {
 			googleMap.clear()
-			state.item.cameras.forEach { cameraState ->
+			state.item.cameras?.forEach { cameraState ->
 				val position = LatLng(cameraState.latitude!!, cameraState.longitude!!)
 				val marker = MarkerOptions()
 					.position(position)
@@ -73,14 +72,15 @@ fun FeedScreen() {
 			.fillMaxSize()
 	) {
 
-		MapViewContainer(
-			mapView,
-			infoWindowAdapter
-		)
+		MapViewContainer(mapView, infoWindowAdapter)
 
 		ZoomControls(
-			{ mapView.getMapAsync({ it.animateCamera(CameraUpdateFactory.zoomIn()) }) },
-			{ mapView.getMapAsync({ it.animateCamera(CameraUpdateFactory.zoomOut()) }) },
+			onZoomIn = {
+				mapView.getMapAsync { it.animateCamera(CameraUpdateFactory.zoomIn()) }
+			},
+			onZoomOut = {
+				mapView.getMapAsync { it.animateCamera(CameraUpdateFactory.zoomOut()) }
+			}
 		)
 
 		UpdateButton(state) {
@@ -164,7 +164,10 @@ private fun UpdateButton(state: CameraListState, onClick: () -> Unit) {
 				is CameraListState.Data -> {
 					Column(horizontalAlignment = Alignment.CenterHorizontally) {
 						Text(text = "UPDATE", style = MaterialTheme.typography.button)
-						Text(text = state.item.lastUpdateTime, style = MaterialTheme.typography.caption)
+						Text(
+							text = state.item.lastUpdateTime,
+							style = MaterialTheme.typography.caption
+						)
 					}
 				}
 				CameraListState.Empty -> {

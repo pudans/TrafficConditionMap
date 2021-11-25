@@ -15,7 +15,7 @@ class TrafficImagesRepository
 		emit(ApiResult.Loading())
 		val response = mApiService.getTrafficImages(dateTime)
 		if (response.isSuccessful) {
-			val result = response.body() ?: ServerResult()
+			val result = response.body() ?: ServerResult(null)
 			emit(ApiResult.Success(result))
 		} else {
 			val errorMsg = response.errorBody()?.string() ?: ""
