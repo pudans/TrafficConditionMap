@@ -1,6 +1,6 @@
 # TrafficConditionMap
 
-![GitHub Cards Preview](https://github.com/pudans/TrafficConditionMap/blob/master/app_video.gif)
+![GitHub Cards Preview](https://github.com/pudans/TrafficConditionMap/blob/master/art/app_video.gif)
 
 A map Application built to Demonstrate the use of Jetpack Compose for building declarative UI in
 Android.
@@ -32,8 +32,8 @@ Android.
 This app uses [***MVVM (Model View View-Model)***](https://developer.android.com/jetpack/docs/guide#recommended-app-arch) architecture.
 
 ## MAD Score
-![summary](https://github.com/pudans/TrafficConditionMap/blob/master/summary.png)
-![summary](https://github.com/pudans/TrafficConditionMap/blob/master/kotlin.png)
+![summary](https://github.com/pudans/TrafficConditionMap/blob/master/art/summary.png)
+![summary](https://github.com/pudans/TrafficConditionMap/blob/master/art/kotlin.png)
 
 ## LICENSE
 
